@@ -1,4 +1,4 @@
-# complex_graph_embedding
+# complex_graph_embedding in tf2
 
 This repo is an implementation of complEx graph embedding for link prediction in tensorflow 2.
 

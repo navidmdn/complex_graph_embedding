@@ -1,12 +1,12 @@
 import tensorflow as tf
 import numpy as np
-import config
+from complex_graph_embedding import config
 import os
 
 from tqdm import tqdm
 from tensorflow import keras
-from model import KBEmbedding
-from data_loader import data_loader
+from complex_graph_embedding.model import KBEmbedding
+from complex_graph_embedding.data_loader import data_loader
 
 
 class Trainer:
@@ -96,13 +96,12 @@ class Trainer:
                 if not iteration % config.TRAIN_LOG_ITERATIONS:
                     print('training loss in iteration {}: {}'.format(iteration, self.train_loss_mean.result()))
 
-            # for _x, _y in self.data_loader.get_batch('validation', self.batch_size):
-            #     subj_ids, rel_ids = list(zip(_x))
-            #     self.validation_step(np.array(subj_ids), np.array(rel_ids), _y)
+            for _x, _y in self.data_loader.get_batch('validation', self.batch_size):
+                subj_ids, rel_ids = list(zip(_x))
+                self.validation_step(np.array(subj_ids), np.array(rel_ids), _y)
 
-
-            # validation_loss = self.validation_loss_mean.result()
-            validation_loss = self.train_loss_mean.result()
+            # validation_loss = self.train_loss_mean.result()
+            validation_loss = self.validation_loss_mean.result()
             print("epoch:{} validation_loss:{}".format(epoch, validation_loss))
             self.store_best_model(validation_loss)
 
@@ -125,8 +124,8 @@ if __name__ == '__main__':
         data_loader=data_loader,
         epochs=config.EPOCHS,
         batch_size=config.BATCH_SIZE,
-        name='complEx'
+        name='complex'
     )
 
-    # trainer.run()
-    trainer.evaluate()
+    trainer.run()
+    # trainer.evaluate()

@@ -71,8 +71,10 @@ class KBEmbedding(keras.Model):
         assert self.hidden_dim % 2 == 0
         hidden_dim_slice = int(self.hidden_dim/2)
 
-        # head_norm = self.head_bn(tf.squeeze(head))
-        head_drp = self.head_drpout(tf.squeeze(head))
+        head_norm = self.head_bn(tf.reshape(head, (-1, hidden_dim_slice, 2)))
+        head_drp = self.head_drpout(head_norm)
+
+        head_drp = tf.reshape(head_drp, (-1, self.hidden_dim))
 
         re_head = tf.slice(head_drp, [0, 0], [-1, hidden_dim_slice])
         im_head = tf.slice(head_drp, [0, hidden_dim_slice], [-1, -1])
@@ -87,13 +89,20 @@ class KBEmbedding(keras.Model):
         re_score = re_head * re_relation - im_head * im_relation
         im_score = re_head * im_relation + im_head * re_relation
 
-        # maybe bn and dropout
+        score = tf.stack([re_score, im_score], axis=1)
+        score_bn = self.score_bn(score)
+        score_drp = self.output_drpout(score_bn)
+
+        score_drp = tf.reshape(score_drp, (-1, self.hidden_dim))
+        re_score = tf.slice(score_drp, [0, 0], [-1, hidden_dim_slice])
+        im_score = tf.slice(score_drp, [0, hidden_dim_slice], [-1, -1])
+
         scores = tf.add(
             tf.matmul(re_score, re_tail, transpose_b=True),
             tf.matmul(im_score, im_tail, transpose_b=True)
         )
 
-        return tf.squeeze(scores)
+        return scores
 
     def call(self, subj_ids, rel_ids):
         entity_embedding = self.entity_encoder(subj_ids)
